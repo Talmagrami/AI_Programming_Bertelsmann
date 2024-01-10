@@ -1,0 +1,168 @@
+Lesson 3
+==============================================================
+
+```{r}
+getwd()
+list.files()
+pf <- read.csv("pseudo_facebook.tsv", sep = '\t')
+names(pf)
+
+library(tidyverse)
+library(ggplot2)
+pf %>% ggplot(aes(dob_day)) +
+  geom_histogram() +
+  scale_x_continuous(breaks = 1:31)
+
+
+qplot(x = dob_day, data = pf) +
+  scale_x_continuous(breaks=1:31) +
+  facet_wrap(~dob_month, ncol = 3)
+```
+## Friend Count
+```{r}
+pf %>% ggplot(aes(friend_count)) +
+  geom_histogram()
+
+# OR
+qplot(x = friend_count, data = pf) 
+
+#########################
+
+pf %>% ggplot(aes(friend_count)) +
+  geom_histogram() +
+  scale_x_continuous(limits = c(0, 1000))
+
+# OR
+
+qplot(x = friend_count, data = pf, xlim = c(0, 1000))
+#########################
+
+qplot(x = friend_count, data = subset(pf, !is.na(gender)), binwidth = 25) +
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50)) +
+  facet_wrap( ~ gender)
+
+
+```
+# Statistics by gender
+```{r}
+
+table(pf$gender)
+by(pf$friend_count, pf$gender, summary)
+
+```
+
+# Tenure
+```{r}
+qplot(x = tenure, data = pf, binwidth = 365, color = I('black'), fill = I('#099DD9'))
+
+qplot(x = tenure/365, data = pf,
+        xlab = 'Number of years using Facebook',
+        ylab = 'Number of users in sample',
+        color = I('black'), fill = I('#F79420')) +
+  scale_x_continuous(breaks = seq(1, 7, 1), limits = c(0, 7))
+        
+  
+```
+# User Ages
+```{r}
+
+subset(pf, !is.na(gender)) %>% ggplot(aes(age)) +
+  geom_histogram(binwidth = 10, color = 'black', fill = '#F79420') +
+  scale_x_continuous(breaks = seq(0, 113, 5)) +
+  facet_wrap(~ gender)
+
+```
+# Transforming Data
+```{r}
+library(gridExtra)
+p1 <- qplot(x = friend_count, data = pf)
+p2 <- qplot(x = friend_count, data = pf) +
+  scale_x_continuous(trans = "log10")
+p3 <- qplot(x = friend_count, data = pf) +
+  scale_x_continuous(trans = "sqrt")
+
+grid.arrange(p1, p2, p3, ncol=3)
+```
+
+# Frequency Polygons (before we had histogram)
+```{r}
+pf %>% 
+  filter(!is.na(gender)) %>%
+  ggplot(aes(x=friend_count, y=..count../sum(..count..), color = gender)) +
+  xlab('Friend Count') +
+  ylab('Propotion of users with that friend count') +
+  geom_freqpoly(binwidth=10) +
+  scale_x_continuous(limits = c(350, 1000), breaks = seq(0, 1000, 50))
+  
+```
+
+# Box Plot
+```{r}
+library(ggplot2)
+qplot(x = gender, y = friend_count, data = subset(pf, !is.na(gender)), 
+      geom = "boxplot") +
+  scale_y_continuous(limits = c(0, 250))
+
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = "boxplot") +
+  coord_cartesian(ylim = c(0, 250))
+```
+# Boxplot, Quartile, Friend Requests
+```{r}
+library(ggplot2)
+qplot(x = gender, y = friend_count, data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+  coord_cartesian(ylim=c(0, 250))
+
+by(pf$friendships_initiated, pf$gender, median)
+```
+
+# Getting logical
+```{r}
+summary(pf$mobile_likes)
+pf$mobile_check_in <- NA
+pf$mobile_check_in <- ifelse(pf$mobile_likes>0, 1, 0)
+pf$mobile_check_in <- factor(pf$mobile_check_in)
+summary(pf$mobile_check_in)
+```
+
+# Problem Set
+```{r}
+library(ggplot2)
+data("diamonds")
+str(diamonds)
+str(diamonds$color)
+
+qplot(x=price, data = diamonds, binwidth = 100, xlim = c(3500, 10000), color = I('black'), fill = I('#F79420'))
+
+summary(diamonds$price)
+
+sum(diamonds$price>=15000)
+
+output <- cut(diamonds$price, breaks = 5)
+qplot(x=output, binwidth = 100, xlim = c(3500, 10000), color = I('black'), fill = I('#F79420'))
+hist(as.numeric(output))
+
+qplot(x = price, data = diamonds) + facet_wrap(~cut)
+
+library(dplyr)
+diamonds %>%
+  ggplot(aes(x = (price/carat))) + 
+  geom_histogram(color = "black", fill = "#F79420") + 
+  facet_wrap(~cut) + 
+  scale_x_log10()
+
+ggplot(diamonds, aes(x=clarity, y=price)) + 
+    geom_boxplot()
+
+by(diamonds$price, diamonds$color, summary)
+IQR(diamonds$price[diamonds$color=='D'])
+
+qplot(data=diamonds, x=carat, xlab='Carat', ylab='Frequency', 
+      xlim = c(0.2, 1.6), binwidth=0.1, geom='freqpoly') +
+  scale_x_continuous(breaks=seq(0,5,0.1)) + 
+  scale_y_continuous(breaks=seq(0,12000,2000))
+
+```
+
